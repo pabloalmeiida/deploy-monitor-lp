@@ -1,0 +1,5 @@
+{
+  "name": "Deploy Monitor",
+  "description": "Automação de monitoramento ativo de saldo e saúde das contas de anúncios.",
+  "requestFramePermissions": []
+}
