@@ -19,7 +19,11 @@ import {
   Eye,
   AlertTriangle,
   Clock,
-  BatteryWarning
+  BatteryWarning,
+  Code,
+  HardDrive,
+  GitBranch,
+  Webhook
 } from 'lucide-react';
 import { Section } from './components/ui/Section';
 import { Button } from './components/ui/Button';
@@ -30,12 +34,14 @@ import { CheckoutForm } from './components/forms/CheckoutForm';
 
 export default function App() {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'template' | 'complete'>('complete');
   
   const scrollToPrice = () => {
     document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const openCheckout = () => {
+  const openCheckout = (plan: 'template' | 'complete') => {
+    setSelectedPlan(plan);
     setIsCheckoutModalOpen(true);
   };
 
@@ -46,9 +52,9 @@ export default function App() {
       <Modal 
         isOpen={isCheckoutModalOpen} 
         onClose={() => setIsCheckoutModalOpen(false)}
-        title="Finalizar Inscrição"
+        title={selectedPlan === 'complete' ? "Garantir Implementação Completa" : "Comprar Apenas o Template"}
       >
-        <CheckoutForm />
+        <CheckoutForm planType={selectedPlan} />
       </Modal>
 
       {/* Navigation / Header */}
@@ -298,7 +304,7 @@ export default function App() {
            
            <div className="text-center mb-16">
              <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Quanto custa sua tranquilidade?</h2>
-             <p className="text-slate-400">Custo único. Benefício recorrente. Zero surpresas.</p>
+             <p className="text-slate-400">Escolha como você quer blindar sua operação.</p>
            </div>
 
            {/* Price Anchoring Cards */}
@@ -344,78 +350,135 @@ export default function App() {
 
            </div>
            
-           <div className="max-w-lg mx-auto">
+           {/* PRICING GRID */}
+           <div className="grid lg:grid-cols-2 gap-8 max-w-5xl mx-auto items-stretch">
              
-             {/* Anchor Pricing Label */}
-             <div className="text-center py-8 my-4 space-y-2">
-                <p className="text-slate-400 text-sm">
-                  Valor de mercado (Setup Infra + Automação + Consultoria): <span className="line-through text-slate-500 font-medium">R$ 5.000,00</span>
-                </p>
+             {/* LEFT CARD: TEMPLATE ONLY (Disadvantageous) */}
+             <div className="relative bg-slate-900/50 rounded-2xl p-8 border border-slate-800 hover:border-slate-700 transition-colors flex flex-col">
+                <div className="flex items-center gap-2 text-xs font-mono text-slate-500 mb-4 uppercase tracking-widest">
+                  <Code size={14} /> Apenas o Template
+                </div>
+                
+                <h3 className="text-2xl font-bold text-white mb-2">Faça Você Mesmo</h3>
+                <p className="text-slate-500 text-sm mb-6">Ideal apenas para programadores experientes que já possuem infraestrutura.</p>
+                
+                <div className="mb-8">
+                  <div className="flex items-baseline gap-2">
+                     <span className="text-3xl font-bold text-white">R$ 97,00</span>
+                     <span className="text-sm text-slate-500">à vista</span>
+                  </div>
+                  <div className="text-xs text-slate-500 mt-1">ou 12x de R$ 10,03</div>
+                </div>
+
+                <div className="space-y-4 mb-8 flex-1">
+                   <div className="p-3 bg-yellow-900/20 border border-yellow-900/50 rounded-lg flex gap-3">
+                      <AlertTriangle size={18} className="text-yellow-500 shrink-0 mt-0.5" />
+                      <div className="text-xs text-yellow-500/90 leading-relaxed">
+                        <strong>Atenção:</strong> Requer conhecimento técnico avançado em Docker, Linux e Redes.
+                      </div>
+                   </div>
+
+                   <ul className="space-y-3 text-sm text-slate-500">
+                     <li className="flex gap-3">
+                       <HardDrive size={16} className="shrink-0" />
+                       Setup Manual de VPS & Portainer
+                     </li>
+                     <li className="flex gap-3">
+                       <Settings size={16} className="shrink-0" />
+                       Instalação manual do n8n (Self-hosted)
+                     </li>
+                     <li className="flex gap-3">
+                       <GitBranch size={16} className="shrink-0" />
+                       Clonar Repo, Criar Imagem Docker & Deploy
+                     </li>
+                     <li className="flex gap-3">
+                       <Webhook size={16} className="shrink-0" />
+                       Ajustar Webhooks e Código para Multi-tenancy
+                     </li>
+                   </ul>
+                </div>
+
+                <Button 
+                  variant="outline" 
+                  fullWidth 
+                  onClick={() => openCheckout('template')} 
+                  className="mt-auto border-slate-700 text-slate-400 hover:text-white hover:border-slate-500 hover:bg-slate-800"
+                >
+                  COMPRAR SÓ O TEMPLATE
+                </Button>
              </div>
 
-             <div className="relative group">
-               {/* Gradient Border Effect - Brand Amber */}
-               <div className="absolute -inset-1 bg-gradient-to-r from-brand-500 via-orange-400 to-brand-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
+             {/* RIGHT CARD: COMPLETE SOLUTION (Advantageous) */}
+             <div className="relative group flex flex-col">
+               {/* Gradient Border Effect */}
+               <div className="absolute -inset-0.5 bg-gradient-to-r from-brand-500 via-orange-400 to-brand-600 rounded-2xl blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
                
-               {/* bg-slate-950 for contrast against light section */}
-               <div className="relative bg-slate-950 rounded-2xl p-8 md:p-10 border border-slate-800 shadow-2xl">
+               <div className="relative bg-slate-950 rounded-2xl p-8 border border-slate-800 shadow-2xl flex flex-col h-full">
                   
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-brand-600 to-orange-600 text-white px-6 py-2 rounded-full text-sm font-bold shadow-lg shadow-brand-900/50 whitespace-nowrap uppercase tracking-wide flex items-center gap-2">
-                     <Zap size={14} className="fill-current" /> Oferta Especial
+                  <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
+                     <div className="bg-brand-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl shadow-lg">
+                        RECOMENDADO
+                     </div>
                   </div>
 
-                  <div className="text-center mt-8 mb-8">
-                    <h3 className="text-xl text-slate-300 font-medium mb-4 uppercase tracking-widest text-xs">Setup Completo + Vitalício</h3>
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                      <span className="text-slate-400 font-medium text-xl mt-4">12x de</span>
-                      <span className="text-[4.5rem] leading-none font-extrabold text-white tracking-tighter">
-                        154,82
+                  <div className="flex items-center gap-2 text-xs font-mono text-brand-400 mb-4 uppercase tracking-widest">
+                    <Zap size={14} /> Solução Completa
+                  </div>
+
+                  <h3 className="text-2xl font-bold text-white mb-2">Instalação + Vitalício</h3>
+                  <p className="text-slate-400 text-sm mb-6">Eu entro no seu servidor e deixo tudo rodando. Você só usa.</p>
+
+                  <div className="mb-8">
+                    <div className="flex items-center gap-2">
+                      <span className="text-slate-400 font-medium text-lg">12x de</span>
+                      <span className="text-5xl font-extrabold text-white tracking-tighter">
+                        206,54
                       </span>
                     </div>
-                    <div className="text-brand-300 font-medium text-base bg-brand-900/20 border border-brand-500/20 inline-block px-4 py-1 rounded-full">
-                      Pagamento Único de R$ 1.497,00
+                    <div className="text-brand-300 font-medium text-sm mt-2">
+                      ou R$ 1.497,00 à vista
                     </div>
                   </div>
 
-                  <div className="space-y-4 mb-10">
-                     <div className="flex items-center gap-4 text-slate-300">
-                       <div className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center shrink-0"><CheckCircle2 size={14} /></div>
-                       <span className="font-medium">Setup VPS + Docker + n8n</span>
-                     </div>
-                     <div className="flex items-center gap-4 text-slate-300">
-                       <div className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center shrink-0"><CheckCircle2 size={14} /></div>
-                       <span className="font-medium">Automação de Monitoramento Ativo</span>
-                     </div>
-                     <div className="flex items-center gap-4 text-slate-300">
-                       <div className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center shrink-0"><CheckCircle2 size={14} /></div>
-                       <span className="font-medium">Alertas WhatsApp/Slack/Email</span>
-                     </div>
-                     <div className="flex items-center gap-4 text-slate-300">
-                       <div className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center shrink-0"><CheckCircle2 size={14} /></div>
-                       <span className="font-medium text-brand-200">Acesso Vitalício ao Código</span>
-                     </div>
-                     <div className="flex items-center gap-4 text-slate-300">
-                       <div className="w-6 h-6 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center shrink-0"><CheckCircle2 size={14} /></div>
-                       <span className="font-medium text-brand-200">Zero Mensalidades</span>
-                     </div>
+                  <div className="space-y-4 mb-8 flex-1">
+                     {[
+                       "Instalação Completa do n8n & Docker",
+                       "Configuração API Meta Ads Pronta",
+                       "Painel de Upload & Templates Validados",
+                       "Acesso Vitalício ao Código Fonte",
+                       "Zero Mensalidades",
+                       "Bônus: Aula de Operação + Suporte"
+                     ].map((feat, idx) => (
+                       <div key={idx} className="flex items-center gap-3 text-slate-200">
+                         <div className="w-5 h-5 rounded-full bg-brand-500/20 text-brand-500 flex items-center justify-center shrink-0">
+                           <CheckCircle2 size={12} />
+                         </div>
+                         <span className="font-medium text-sm">{feat}</span>
+                       </div>
+                     ))}
                   </div>
 
-                  <Button fullWidth onClick={openCheckout} className="text-lg py-5 group-hover:shadow-brand-500/50 bg-gradient-to-r from-brand-600 to-orange-500">
-                    GARANTIR MINHA SEGURANÇA
+                  <Button 
+                    fullWidth 
+                    onClick={() => openCheckout('complete')} 
+                    className="mt-auto py-4 bg-gradient-to-r from-brand-600 to-orange-500 text-white shadow-brand-500/20 hover:shadow-brand-500/40"
+                  >
+                    QUERO TUDO PRONTO
                   </Button>
                   
-                  <div className="flex items-center justify-center gap-4 mt-6 pt-6 border-t border-slate-800">
+                  <div className="flex items-center justify-center gap-4 mt-6 pt-6 border-t border-slate-800/50">
                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <ShieldCheck size={16} className="text-orange-500" />
+                        <ShieldCheck size={14} className="text-green-500" />
                         Compra Segura
                      </div>
                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        <CheckCircle2 size={16} className="text-orange-500" />
+                        <CheckCircle2 size={14} className="text-green-500" />
                         Garantia de 7 Dias
                      </div>
                   </div>
                </div>
              </div>
+
            </div>
          </div>
       </Section>
