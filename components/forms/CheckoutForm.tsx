@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { Lock, Loader2 } from 'lucide-react';
 
-export const CheckoutForm: React.FC = () => {
+interface CheckoutFormProps {
+  planType: 'template' | 'complete';
+}
+
+export const CheckoutForm: React.FC<CheckoutFormProps> = ({ planType }) => {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -84,8 +88,9 @@ export const CheckoutForm: React.FC = () => {
     // Cria o payload específico para o Webhook com os dados extras
     const webhookPayload = {
       ...formData,
-      submitted_at: now.toISOString(), // Ex: "2023-10-27T10:00:00.000Z" (Padrão ISO)
-      timestamp: now.getTime()         // Ex: 1698400800000 (Numérico/Unix)
+      plan_type: planType, // Envia qual plano o usuário escolheu
+      submitted_at: now.toISOString(),
+      timestamp: now.getTime()
     };
     // ----------------------------------
 
@@ -101,7 +106,8 @@ export const CheckoutForm: React.FC = () => {
         },
         'leadName': formData.name,
         'leadEmail': formData.email,
-        'leadPhone': formData.phone
+        'leadPhone': formData.phone,
+        'planType': planType
       });
     } catch (err) {
       console.error("Erro ao enviar para DataLayer:", err);
@@ -109,17 +115,23 @@ export const CheckoutForm: React.FC = () => {
     // --------------------------
 
     try {
-      // 1. Send data to Webhook (USANDO O NOVO PAYLOAD)
+      // 1. Send data to Webhook
       await fetch('https://webhook.zenclick.com.br/webhook/deploy-ads-zenclick-pre-checkout-lead', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(webhookPayload) // <--- Alterado aqui
+        body: JSON.stringify(webhookPayload)
       }).catch(err => console.error("Webhook error (might be CORS, ignoring):", err));
       
-      // 2. Construct Hotmart URL
-      const baseUrl = "https://pay.hotmart.com/H103640886H"; // UPDATED URL
+      // 2. Select Hotmart URL based on Plan Type
+      let baseUrl = "";
+      if (planType === 'template') {
+        baseUrl = "https://pay.hotmart.com/U103657147O"; // Link do Template (R$ 97)
+      } else {
+        baseUrl = "https://pay.hotmart.com/H103640886H"; // Link Completo (R$ 1497)
+      }
+
       const redirectParams = new URLSearchParams();
       
       // Add default Hotmart param
@@ -134,18 +146,15 @@ export const CheckoutForm: React.FC = () => {
       if (formData.sck) redirectParams.append('sck', formData.sck);
       if (formData.src) redirectParams.append('src', formData.src);
       
-      // Pass user info to pre-fill Hotmart checkout if supported by Hotmart params
+      // Pass user info to pre-fill Hotmart checkout
       redirectParams.append('name', formData.name);
       redirectParams.append('email', formData.email);
       
-      // Handle Phone for Hotmart (expects 'phoneac' as DDD + Number, without country code for Brazil)
-      let cleanPhone = formData.phone.replace(/\D/g, ''); // Remove formatação (ex: 5511999999999)
-      
-      // Se começar com 55 (Brasil) e tiver tamanho suficiente, remove o 55 para enviar só DDD+Número
+      // Handle Phone for Hotmart
+      let cleanPhone = formData.phone.replace(/\D/g, ''); 
       if (cleanPhone.startsWith('55') && cleanPhone.length > 10) {
         cleanPhone = cleanPhone.substring(2); 
       }
-      
       redirectParams.append('phoneac', cleanPhone);
       
       const finalUrl = `${baseUrl}?${redirectParams.toString()}`;
@@ -207,15 +216,6 @@ export const CheckoutForm: React.FC = () => {
           onChange={handleChange}
         />
       </div>
-
-      {/* Hidden Fields requested */}
-      <input type="hidden" id="utm_source" name="utm_source" value={formData.utm_source} />
-      <input type="hidden" id="utm_medium" name="utm_medium" value={formData.utm_medium} />
-      <input type="hidden" id="utm_campaign" name="utm_campaign" value={formData.utm_campaign} />
-      <input type="hidden" id="utm_term" name="utm_term" value={formData.utm_term} />
-      <input type="hidden" id="utm_content" name="utm_content" value={formData.utm_content} />
-      <input type="hidden" id="sck" name="sck" value={formData.sck} />
-      <input type="hidden" id="src" name="src" value={formData.src} />
 
       <div className="pt-2">
         <Button fullWidth type="submit" disabled={loading} className="flex justify-center items-center gap-2">
